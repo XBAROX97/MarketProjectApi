@@ -28,29 +28,23 @@ const boxesSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Products',
         required: true
+    },
+
+    originalQuantityInPieces:
+    {
+        type: Number,
+
+
     }
 
 })
 
-// boxesSchema.pre('findOneAndDelete', async function (next) {
-   
-//     try {
-//         // Get the product associated with the box
-//         const product = await this.model('Products').findById(this.productId);
-
-//         // Decrease the product quantity by the quantity in the box
-//         product.quantityInPieces -= this.productQuantity;
-
-//         // Save the updated product
-//         await product.save();
-
-//         // Move on to the next middleware
-//         next();
-//     } catch (error) {
-//         // Handle the error
-//         next(error);
-//     }
-// });
+boxesSchema.pre('save', function (next) {
+    if (this.isNew) {
+        this.originalQuantityInPieces = this.productQuantity * this.quantity;
+    }
+    next();
+});
 
 
 

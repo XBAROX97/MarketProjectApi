@@ -36,7 +36,7 @@ const productsSchema = new mongoose.Schema({
 
     totalNumberOfPieces: {
         type: Number,
-        default: 0
+        
     },
 
 

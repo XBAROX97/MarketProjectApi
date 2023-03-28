@@ -16,13 +16,17 @@ const postBoxes = async (req, res) => {
             productId: req.body.productId,
         });
 
+
         // const originalQuantityInPieces = req.body.originalQuantityInPieces;
 
         const savedBox = await box.save();
 
-
         // update the quantity of products in the Product model
         const product = await Product.findById(req.body.productId);
+        if (!product) {
+            return res.status(404).json({ error: 'Product not found' });
+        }
+
         product.totalNumberOfPieces += req.body.productQuantity * req.body.quantity;
         product.quantityInPieces = product.totalNumberOfPieces
 
@@ -64,34 +68,61 @@ const get1Box = async (req, res) => {
 
 
 //update boxes
+
 const updateBoxes = async (req, res) => {
     try {
-        const box = await boxes.updateOne({ _id: req.params.id }, {
-            $set: {
-                quantity: req.body.quantity,
-                name: req.body.name,
-                productQuantity: req.body.productQuantity,
-                price: req.body.price
-            }
-        })
+        const boxe = await boxes.findById(req.params.id)
+        const oldQuantity = parseInt(boxe.quantity)
+        const newQuantity = parseInt(oldQuantity) + parseInt(req.body.quantity)
+        const box = await boxes.findOneAndUpdate(
+            { _id: req.params.id },
+            {
+                $set: {
+                    quantity: newQuantity,
+                    name: req.body.name,
+                    productQuantity: req.body.productQuantity,
+                    price: req.body.price
+                }
+            },
+            { new: true } // Return the updated document instead of the old one
+        );
 
-        if (req.body.productQuantity != null) {
-            const oldQuantity = res.boxes.productQuantity;
-            res.boxes.productQuantity = req.body.productQuantity;
-            // update the quantity of products in the Product model
-            const product = await Product.findById(res.boxes.productId);
-            product.totalNumberOfPieces += (req.body.productQuantity - oldQuantity);
-            product.quantityInPieces = product.totalNumberOfPieces;
-            await product.save();
+        if (req.body.productQuantity == null) {
+            return res.status(400).json({ message: "Please insert number of products in the box!" });
+        }
+        if (req.body.productId == null) {
+            return res.status(400).json({ message: "Please insert the product's id" });
         }
 
-        res.status(200).json(box)
-        console.log(`${box.modifiedCount} box(s) have been updated `)
+        if (req.body.quantity != null) {
+
+            const product1 = await Product.findById(req.body.productId)
+            const oldProductQuantity = product1.quantityInPieces
+            const newProductQuantity = oldProductQuantity + (req.body.quantity * req.body.productQuantity)
+
+            const product = await Product.findOneAndUpdate(
+                { _id: req.body.productId },
+                {
+                    $set: {
+                        quantityInPieces: newProductQuantity
+                    }
+                },
+                { new: true })
+
+            await product.save();
+            // const product = await Product.findById(req.body.productId);
+            // product.totalNumberOfPieces += req.body.productQuantity * req.body.quantity;
+            // product.quantityInPieces = product.totalNumberOfPieces;
+
+        }
+        return res.status(200).json(box);
 
     } catch (err) {
-        res.status(400).json({ message: err })
+        console.error(err);
+        return res.status(500).json({ message: "An error occurred while updating the box!" });
     }
 }
+
 
 // DELETE a box
 const deleteBoxes = async (req, res) => {
@@ -106,7 +137,7 @@ const deleteBoxes = async (req, res) => {
                 { $inc: { quantityInPieces: -box.productQuantity } },
                 { new: true }
             );
-            
+
             console.log(`Box ${req.params.id} has been deleted, and ${box.productQuantity} pieces of product ${product.name} have been removed`);
             res.status(200).json(box);
         } else {
@@ -121,6 +152,6 @@ const deleteBoxes = async (req, res) => {
 
 
 module.exports = {
-    
+
     postBoxes, getBoxes, updateBoxes, deleteBoxes, get1Box
 }

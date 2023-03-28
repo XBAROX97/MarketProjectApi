@@ -34,6 +34,7 @@ const PurchaseController = async (req, res) => {
     user.budget -= totalCost;
 
     product.quantityInPieces -= quantity;
+    // product.totalNumberOfPieces = product.quantityInPieces
 
     await user.save();
     await product.save();
@@ -87,7 +88,6 @@ const PurchaseController = async (req, res) => {
 const getPurchases = async (req, res) => {
   try {
     const purchases = await Purchase.find();
-    console.log(purchases)
     res.status(200).json(purchases);
   } catch (err) {
     res.status(400).json({ message: err });
@@ -106,7 +106,7 @@ const calculateMonthlyProfit = async () => {
 
   var totalProfit = 0;
 
-   
+
   for (const product of products) {
     const profit = Number(product.price) - Number(product.retailPrice);
     const quantitySold = Number(product.totalNumberOfPieces) - Number(product.quantityInPieces);
