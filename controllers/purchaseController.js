@@ -1,12 +1,8 @@
-const express = require("express");
-const mongoose = require("mongoose");
 const Users = require("../models/usersModel");
 const Product = require("../models/productsModel");
 const Purchase = require("../models/purchaseModel.js");
 const Debt = require("../models/debtModel");
 const Profits = require("../models/profitsModel");
-const boxes = require('../models/boxesModel');
-const { initQuantity } = require("./boxesController");
 
 
 //Post purchases
@@ -16,7 +12,6 @@ const PurchaseController = async (req, res) => {
 
     const user = await Users.findById(userId);
     const product = await Product.findById(productId);
-
 
     if (user == null || product == null) {
       return res.status(404).json({ message: "User or product not found" });
@@ -34,7 +29,6 @@ const PurchaseController = async (req, res) => {
     user.budget -= totalCost;
 
     product.quantityInPieces -= quantity;
-    // product.totalNumberOfPieces = product.quantityInPieces
 
     await user.save();
     await product.save();
@@ -47,8 +41,8 @@ const PurchaseController = async (req, res) => {
       })
 
       const purchase = new Purchase({
-        user: userId,
-        product: productId,
+        user:  userId,
+        product:  productId,
         quantity: req.body.quantity,
         totalCost,
       });
@@ -56,22 +50,53 @@ const PurchaseController = async (req, res) => {
 
       user.debt += debt.amount;
       user.budget = 0;
-      const savedPurchases = await purchase.save()
 
-      res.status(201).json(savedPurchases);
+    await purchase.save()
+    const response = {
+      id: purchase._id,
+      user: {
+        id: userId,
+        name: user.name
+      },
+      product: {
+        id: productId,
+        name: product.name
+      },
+      quantity,
+      totalCost
+    };
+
+      res.status(201).json(response);
 
       await user.save();
       await calculateMonthlyProfit()
     } else {
       const purchase = new Purchase({
-        user: userId,
+        user:  userId,
         product: productId,
         quantity: req.body.quantity,
         totalCost,
       });
-      const savedPurchases = await purchase.save()
 
-      res.status(201).json(savedPurchases);
+      
+      await purchase.save()
+
+      const response = {
+        id: purchase._id,
+        user: {
+          id: userId,
+          name: user.name
+        },
+        product: {
+          id: productId,
+          name: product.name
+        },
+        quantity,
+        totalCost
+      };
+      
+
+      res.status(201).json(response);
 
       await user.save();
       await calculateMonthlyProfit()
