@@ -112,8 +112,23 @@ const PurchaseController = async (req, res) => {
 //Get all purchases
 const getPurchases = async (req, res) => {
   try {
-    const purchases = await Purchase.find();
-    res.status(200).json(purchases);
+    const purchases = await Purchase.find()
+
+    const response = purchases.map(purchase => ({
+      id: purchase._id,
+      user: {
+        id: purchase.user._id,
+        name: purchase.user.name
+      },
+      product: {
+        id: purchase.product._id,
+        name: purchase.product.name
+      },
+      quantity: purchase.quantity,
+      totalCost: purchase.totalCost
+    }));
+    
+    res.status(200).json(response);
   } catch (err) {
     res.status(400).json({ message: err });
   }
