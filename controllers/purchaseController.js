@@ -41,8 +41,8 @@ const PurchaseController = async (req, res) => {
       })
 
       const purchase = new Purchase({
-        user:  userId,
-        product:  productId,
+        user: userId,
+        product: productId,
         quantity: req.body.quantity,
         totalCost,
       });
@@ -51,20 +51,20 @@ const PurchaseController = async (req, res) => {
       user.debt += debt.amount;
       user.budget = 0;
 
-    await purchase.save()
-    const response = {
-      id: purchase._id,
-      user: {
-        id: userId,
-        name: user.name
-      },
-      product: {
-        id: productId,
-        name: product.name
-      },
-      quantity,
-      totalCost
-    };
+      await purchase.save()
+      const response = {
+        id: purchase._id,
+        user: {
+          id: userId,
+          name: user.name
+        },
+        product: {
+          id: productId,
+          name: product.name
+        },
+        quantity,
+        totalCost
+      };
 
       res.status(201).json(response);
 
@@ -72,13 +72,13 @@ const PurchaseController = async (req, res) => {
       await calculateMonthlyProfit()
     } else {
       const purchase = new Purchase({
-        user:  userId,
+        user: userId,
         product: productId,
         quantity: req.body.quantity,
         totalCost,
       });
 
-      
+
       await purchase.save()
 
       const response = {
@@ -94,7 +94,7 @@ const PurchaseController = async (req, res) => {
         quantity,
         totalCost
       };
-      
+
 
       res.status(201).json(response);
 
@@ -110,29 +110,40 @@ const PurchaseController = async (req, res) => {
 }
 
 //Get all purchases
-const getPurchases = async (req, res) => {
+const getAllPurchases = async (req, res) => {
   try {
-    const purchases = await Purchase.find()
-
-    const response = purchases.map(purchase => ({
-      id: purchase._id,
-      user: {
-        id: purchase.user._id,
-        name: purchase.user.name
-      },
-      product: {
-        id: purchase.product._id,
-        name: purchase.product.name
-      },
-      quantity: purchase.quantity,
-      totalCost: purchase.totalCost
-    }));
-    
-    res.status(200).json(response);
-  } catch (err) {
-    res.status(400).json({ message: err });
+    const purchases = await Purchase.find({});
+    const response = [];
+    for (const purchase of purchases) {
+      const user = await Users.findById(purchase.user);
+      const product = await Product.findById(purchase.product);
+      if (!user || !product) {
+        continue;
+      }
+      const purchaseData = {
+        id: purchase._id,
+        user: {
+          id: purchase.user,
+          name: user.name
+        },
+        product: {
+          id: purchase.product,
+          name: product.name
+        },
+        quantity: purchase.quantity,
+        totalCost: purchase.totalCost
+      };
+      response.push(purchaseData);
+    }
+    res.json(response);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal server error" });
   }
-};
+}
+
+
+
 
 //Calculate monthly profits
 
@@ -170,5 +181,5 @@ const calculateMonthlyProfit = async () => {
 };
 
 
-module.exports = { PurchaseController, getPurchases, calculateMonthlyProfit };
+module.exports = { PurchaseController, getAllPurchases, calculateMonthlyProfit };
 
