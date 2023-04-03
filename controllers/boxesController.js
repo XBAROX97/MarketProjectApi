@@ -143,8 +143,8 @@ const deleteBoxes = async (req, res) => {
         if (box1) {
             const product = await Product.findOneAndUpdate(
                 { _id: box1.productId },
-                { $set: { quantityInPieces: - (box1.productQuantity) * (box1.quantity) } },
-                { new: true }
+                { $inc: { quantityInPieces: - ((box1.productQuantity) * (box1.quantity)) } },
+            
             );
 
             await product.save()
