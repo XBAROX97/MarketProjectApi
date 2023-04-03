@@ -36,8 +36,8 @@ const postBoxes = async (req, res) => {
 
         res.status(201).json(savedBox);
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Internal server error' });
+        console.error();
+        res.status(500).json({ error: 'Internal server error', message: error });
     }
 };
 
