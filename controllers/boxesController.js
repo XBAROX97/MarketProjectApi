@@ -1,9 +1,6 @@
 const express = require('express')
 const Product = require('../models/productsModel')
 const boxes = require('../models/boxesModel')
-const mongoose = require('mongoose')
-const bodyParser = require("body-parser");
-
 
 //post products boxes
 const postBoxes = async (req, res) => {
@@ -27,8 +24,8 @@ const postBoxes = async (req, res) => {
             return res.status(404).json({ error: 'Product not found' });
         }
 
-        product.totalNumberOfPieces += req.body.productQuantity * req.body.quantity;
-        product.quantityInPieces = product.totalNumberOfPieces
+        product.quantityInPieces += req.body.productQuantity * req.body.quantity;
+        // product.quantityInPieces = product.totalNumberOfPieces
 
 
         // product.originalQuantityInPieces = originalQuantityInPieces;
@@ -66,7 +63,6 @@ const get1Box = async (req, res) => {
     }
 }
 
-
 //update boxes
 
 const updateBoxes = async (req, res) => {
@@ -96,24 +92,37 @@ const updateBoxes = async (req, res) => {
 
         if (req.body.quantity != null) {
 
-            const product1 = await Product.findById(req.body.productId)
-            const oldProductQuantity = product1.quantityInPieces
-            const newProductQuantity = oldProductQuantity + (req.body.quantity * req.body.productQuantity)
+            if (req.body.quantity > boxe.quantity) {
+                const product1 = await Product.findById(req.body.productId)
+                const oldProductQuantity = product1.quantityInPieces
+                const newProductQuantity = oldProductQuantity + (req.body.quantity * req.body.productQuantity)
+                const product = await Product.findOneAndUpdate(
+                    { _id: req.body.productId },
+                    {
+                        $set: {
+                            quantityInPieces: newProductQuantity
+                        }
+                    },
+                    { new: true })
+                await product.save();
+            }
 
-            const product = await Product.findOneAndUpdate(
-                { _id: req.body.productId },
-                {
-                    $set: {
-                        quantityInPieces: newProductQuantity
-                    }
-                },
-                { new: true })
-
-            await product.save();
-            // const product = await Product.findById(req.body.productId);
-            // product.totalNumberOfPieces += req.body.productQuantity * req.body.quantity;
-            // product.quantityInPieces = product.totalNumberOfPieces;
-
+            if (req.body.quantity < boxe.quantity) {
+                const product1 = await Product.findById(req.body.productId)
+                const oldProductQuantity = product1.quantityInPieces
+                const newProductQuantity = oldProductQuantity - (req.body.quantity * boxe.productQuantity)
+                const product = await Product.findOneAndUpdate(
+                    { _id: req.body.productId },
+                    {
+                        $set: {
+                            quantityInPieces: newProductQuantity
+                        }
+                    },
+                    { new: true })
+                await product.save();
+            }
+            else
+                return
         }
         return res.status(200).json(box);
 
@@ -128,17 +137,21 @@ const updateBoxes = async (req, res) => {
 const deleteBoxes = async (req, res) => {
     try {
         // Find the box to be deleted
-        const box = await boxes.findOneAndDelete({ _id: req.params.id });
+        const box1 = await boxes.findById({ _id: req.params.id });
 
         // If the box is found, update the associated product's quantity
-        if (box) {
+        if (box1) {
             const product = await Product.findOneAndUpdate(
-                { _id: box.productId },
-                { $inc: { quantityInPieces: -box.productQuantity } },
+                { _id: box1.productId },
+                { $set: { quantityInPieces: - (box1.productQuantity) * (box1.quantity) } },
                 { new: true }
             );
 
-            console.log(`Box ${req.params.id} has been deleted, and ${box.productQuantity} pieces of product ${product.name} have been removed`);
+            await product.save()
+
+            const box = await boxes.deleteOne({ _id: req.params.id })
+
+            console.log(`Box ${box1.name} has been deleted, and ${box1.productQuantity} pieces of product ${product.name} have been removed`);
             res.status(200).json(box);
         } else {
             // If the box is not found, return a 404 status code
@@ -148,8 +161,6 @@ const deleteBoxes = async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 };
-
-
 
 module.exports = {
 
