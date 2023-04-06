@@ -1,8 +1,8 @@
 // models/Purchase.js
 
 const mongoose = require("mongoose");
-const User = require("../models/usersModel");
-const Product = require("../models/productsModel");
+
+
 
 const purchaseSchema = new mongoose.Schema({
   user: {

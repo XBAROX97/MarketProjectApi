@@ -40,6 +40,11 @@ const usersSchema = new mongoose.Schema({
         type: String,
         match: /\.(jpg|jpeg|png|gif)$/
     },
+    
+    points:{
+        type: Number,
+        default:0
+    }
 
 
 

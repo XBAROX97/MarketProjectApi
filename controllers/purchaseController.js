@@ -3,9 +3,9 @@ const Product = require("../models/productsModel");
 const Purchase = require("../models/purchaseModel.js");
 const Debt = require("../models/debtModel");
 const Profits = require("../models/profitsModel");
+const leaderBoard = require("../models/leaderboard")
+const LeaderboardController = require('./leaderBoardController')
 
-
-//Post purchases
 const PurchaseController = async (req, res) => {
   try {
     const { userId, productId, quantity } = req.body;
@@ -20,8 +20,6 @@ const PurchaseController = async (req, res) => {
     const totalCost = quantity * product.price;
     const remainingBudget = user.budget - totalCost;
 
-
-
     if (product.quantityInPieces < quantity) {
       return res.status(400).json({ message: "Not enough quantity" });
     }
@@ -30,15 +28,14 @@ const PurchaseController = async (req, res) => {
 
     product.quantityInPieces -= quantity;
 
-    await user.save();
-    await product.save();
+    await product.save(); // Save product first
 
     if (remainingBudget < 0) {
       const debt = new Debt({
         user: userId,
         amount: Math.abs(remainingBudget),
         date: new Date(),
-      })
+      });
 
       const purchase = new Purchase({
         user: userId,
@@ -51,25 +48,38 @@ const PurchaseController = async (req, res) => {
       user.debt += debt.amount;
       user.budget = 0;
 
-      await purchase.save()
+      user.points += 5; // Update user points
+
+      ard = await leaderBoard.findOne({ user: userId });
+      if (leaderBoard) {
+        leaderBoard.points += 5;
+        await leaderBoard.save();
+      } else {
+        const newLeaderboard = new leaderBoard({ user: userId, points: 5 });
+        await newLeaderboard.save();
+      }
+
+
+      await purchase.save();
       const response = {
         id: purchase._id,
         user: {
           id: userId,
-          name: user.name
+          name: user.name,
+          points: user.points,
         },
         product: {
           id: productId,
-          name: product.name
+          name: product.name,
         },
         quantity,
-        totalCost
+        totalCost,
       };
-
+      
+      await user.save();
       res.status(201).json(response);
 
-      await user.save();
-      await calculateMonthlyProfit()
+      await calculateMonthlyProfit();
     } else {
       const purchase = new Purchase({
         user: userId,
@@ -78,36 +88,44 @@ const PurchaseController = async (req, res) => {
         totalCost,
       });
 
+      user.points += 10; // Update user points
+      ard = await leaderBoard.findOne({ user: userId });
+      if (leaderBoard) {
+        leaderBoard.points += 10;
+        await leaderBoard.save();
+      } else {
+        const newLeaderboard = new leaderBoard({ user: userId, points: 5 });
+        await newLeaderboard.save();
+      }
 
-      await purchase.save()
+
+      await purchase.save();
 
       const response = {
         id: purchase._id,
         user: {
           id: userId,
-          name: user.name
+          name: user.name,
+          points: user.points,
         },
         product: {
           id: productId,
-          name: product.name
+          name: product.name,
         },
         quantity,
-        totalCost
+        totalCost,
       };
-
 
       res.status(201).json(response);
 
       await user.save();
-      await calculateMonthlyProfit()
-
+      await calculateMonthlyProfit();
     }
-
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Internal server error" });
   }
-}
+};
 
 //Get all purchases
 const getAllPurchases = async (req, res) => {
@@ -124,7 +142,8 @@ const getAllPurchases = async (req, res) => {
         id: purchase._id,
         user: {
           id: purchase.user,
-          name: user.name
+          name: user.name,
+          points: user.points
         },
         product: {
           id: purchase.product,
@@ -141,9 +160,6 @@ const getAllPurchases = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 }
-
-
-
 
 //Calculate monthly profits
 

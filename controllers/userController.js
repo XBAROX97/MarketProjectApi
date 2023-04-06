@@ -1,7 +1,5 @@
 const express = require("express");
-const mongoose = require("mongoose");
 const Users = require("../models/usersModel");
-const bodyParser = require("body-parser");
 const controller = express()
 controller.use(express.json());
 controller.use(express.urlencoded({ extended: false }));
