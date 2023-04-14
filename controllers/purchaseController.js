@@ -3,16 +3,15 @@ const Product = require("../models/productsModel");
 const Purchase = require("../models/purchaseModel.js");
 const Debt = require("../models/debtModel");
 const Profits = require("../models/profitsModel");
-const leaderBoard = require("../models/leaderboard")
-const LeaderboardController = require('./leaderBoardController')
-const archivedUser = require('../models/archivedUsers');
-const profits = require('../models/profitsModel')
-
+const leaderBoard = require("../models/leaderboard");
+const LeaderboardController = require("./leaderBoardController");
+const archivedUser = require("../models/archivedUsers");
+const profits = require("../models/profitsModel");
 
 const PurchaseController = async (req, res) => {
   try {
     const { userId, productId, quantity } = req.body;
-    const profit = await profits.find()
+    const profit = await profits.find();
 
     const user = await Users.findById(userId);
     const product = await Product.findById(productId);
@@ -63,7 +62,6 @@ const PurchaseController = async (req, res) => {
       //   await newLeaderboard.save();
       // }
 
-
       await purchase.save();
       const response = {
         id: purchase._id,
@@ -79,7 +77,7 @@ const PurchaseController = async (req, res) => {
         quantity,
         totalCost,
       };
-      
+
       await user.save();
       res.status(201).json(response);
 
@@ -90,10 +88,9 @@ const PurchaseController = async (req, res) => {
         product: productId,
         quantity: req.body.quantity,
         totalCost,
-        profit
+        profit,
       });
 
-     
       user.points += 10; // Update user points
       // ard = await leaderBoard.findOne({ user: userId });
       // if (leaderBoard) {
@@ -103,7 +100,6 @@ const PurchaseController = async (req, res) => {
       //   const newLeaderboard = new leaderBoard({ user: userId, points: 5 });
       //   await newLeaderboard.save();
       // }
-
 
       await purchase.save();
 
@@ -120,7 +116,7 @@ const PurchaseController = async (req, res) => {
         },
         quantity,
         totalCost,
-        profit
+        profit,
       };
 
       res.status(201).json(response);
@@ -145,7 +141,7 @@ const getAllPurchases = async (req, res) => {
     // Loop through all archived users
     for (const user of archivedUsers) {
       // Fetch all purchases made by the current archived user
-      const purchases = await Purchase.find({ user:user.id });
+      const purchases = await Purchase.find({ user: user.id });
 
       // Loop through all purchases made by the current archived user
       for (const purchase of purchases) {
@@ -162,9 +158,8 @@ const getAllPurchases = async (req, res) => {
         const purchaseData = {
           id: purchase._id,
           archivedUser: {
-            id: purchase.user,
-            name: user.name,
-            points: user.points,
+            id: purchase.archivedUser,
+            name: archivedUsers.username,
           },
           product: {
             id: purchase.product,
@@ -172,16 +167,16 @@ const getAllPurchases = async (req, res) => {
           },
           quantity: purchase.quantity,
           totalCost: purchase.totalCost,
-          archivedAt: user.deletedAt, // Add the timestamp when the user was archived
         };
         archivedPurchases.push(purchaseData);
       }
     }
 
-
     // Fetch all purchases made by active users
     const purchases = await Purchase.find({});
     const response = [];
+
+    console.log(archivedPurchases);
 
     // Loop through all purchases made by active users
     for (const purchase of purchases) {
@@ -220,8 +215,6 @@ const getAllPurchases = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
-  
-
 
 //Calculate monthly profits
 
@@ -236,7 +229,8 @@ const calculateMonthlyProfit = async () => {
 
   for (const product of products) {
     const profit = Number(product.price) - Number(product.retailPrice);
-    const quantitySold = Number(product.totalNumberOfPieces) - Number(product.quantityInPieces);
+    const quantitySold =
+      Number(product.totalNumberOfPieces) - Number(product.quantityInPieces);
     if (isNaN(profit) || isNaN(quantitySold)) {
       continue;
     } else {
@@ -266,16 +260,13 @@ const calculateMonthlyProfit = async () => {
 };
 
 //Get all profits
-   const getAllProfits = async (req,res)=>{
-    try{
-const profits = await Profits.find()
-res.status(200).json(profits)
-   }catch(err){
-    res.status(400).json({message: err})
-   }
+const getAllProfits = async (req, res) => {
+  try {
+    const profits = await Profits.find();
+    res.status(200).json(profits);
+  } catch (err) {
+    res.status(400).json({ message: err });
   }
-
-
+};
 
 module.exports = { PurchaseController, getAllPurchases, getAllProfits };
-

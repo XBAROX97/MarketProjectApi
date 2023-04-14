@@ -1,10 +1,11 @@
 const express = require("express");
 const Users = require("../models/usersModel");
-const controller = express()
+const controller = express();
 controller.use(express.json());
 controller.use(express.urlencoded({ extended: false }));
-const ArchivedUser = require('../models/archivedUsers')
-
+const ArchivedUser = require("../models/archivedUsers");
+const Purchase = require("../models/purchaseModel");
+const archivedUsers = require("../models/archivedUsers");
 //Get all users
 const getUsers = async (req, res) => {
   try {
@@ -51,34 +52,39 @@ const get1User = async (req, res) => {
   }
 };
 
-//Delete user
-const deleteUsers = async (req, res) => {
-  const userId = req.params.id;
-
+const deleteUser = async (req, res) => {
   try {
-    // find the user to delete
-    const userToDelete = await Users.findById(userId);
-
-    if (!userToDelete) {
-      return res.status(404).json({ error: 'User not found' });
+    // Find the user to be deleted
+    const user = await Users.findById(req.params.id);
+    if (!user) {
+      throw new Error("User not found");
     }
 
-    // insert the user into the archived collection
-    const archivedUser = new ArchivedUser({
-      username: userToDelete.name,
-    });
-    await archivedUser.save();
+    // Find all purchases made by the user
+    const purchases = await Purchase.find({ user: req.params.id });
+    
+    // Archive the user's purchase history
+    for (const purchase of purchases) {
+      const archivedUser = new ArchivedUser({
+        username: user.name,
+      });
+      await archivedUser.save();
+      purchase.archivedUser = archivedUser._id;
+      await purchase.save();
+  
+    }
+    
 
-    // remove the user from the original collection
-    await Users.findByIdAndDelete(userId);
+    // Delete the user
+    await Users.deleteOne({ _id: req.params.id });
 
-    res.json({ message: 'User deleted successfully' });
+    // Send a response to the client
+    res.status(200).json({ message: "User deleted successfully" });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ message: "Internal server error" });
   }
 };
-
 
 //Update Users
 const updateUsers = async (req, res) => {
@@ -107,6 +113,6 @@ module.exports = {
   getUsers,
   postUsers,
   get1User,
-  deleteUsers,
-  updateUsers
+  deleteUser,
+  updateUsers,
 };

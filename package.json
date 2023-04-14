@@ -16,5 +16,16 @@
     "node-cron": "^3.0.2",
     "nodemon": "^2.0.22"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Asmarsalem/Market.git"
+  },
+  "keywords": [
+    "7"
+  ],
+  "bugs": {
+    "url": "https://github.com/Asmarsalem/Market/issues"
+  },
+  "homepage": "https://github.com/Asmarsalem/Market#readme",
   "description": ""
 }
