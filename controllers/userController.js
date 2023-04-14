@@ -3,6 +3,7 @@ const Users = require("../models/usersModel");
 const controller = express()
 controller.use(express.json());
 controller.use(express.urlencoded({ extended: false }));
+const ArchivedUser = require('../models/archivedUsers')
 
 //Get all users
 const getUsers = async (req, res) => {
@@ -52,14 +53,32 @@ const get1User = async (req, res) => {
 
 //Delete user
 const deleteUsers = async (req, res) => {
+  const userId = req.params.id;
+
   try {
-    const deletedUser = await Users.deleteOne({ _id: req.params.id });
-    res.status(200).json(deletedUser);
-    console.log(`${deletedUser.deletedCount} user(s) have been deleted`);
+    // find the user to delete
+    const userToDelete = await Users.findById(userId);
+
+    if (!userToDelete) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // insert the user into the archived collection
+    const archivedUser = new ArchivedUser({
+      username: userToDelete.name,
+    });
+    await archivedUser.save();
+
+    // remove the user from the original collection
+    await Users.findByIdAndDelete(userId);
+
+    res.json({ message: 'User deleted successfully' });
   } catch (err) {
-    res.status(400).json({ message: err });
+    console.error(err);
+    res.status(500).json({ error: 'Internal server error' });
   }
 };
+
 
 //Update Users
 const updateUsers = async (req, res) => {

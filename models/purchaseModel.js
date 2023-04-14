@@ -9,8 +9,14 @@ const purchaseSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
   },
+
+  archivedUser: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "ArchivedUser"
+  },
+
   product: {
-   type: mongoose.Schema.Types.ObjectId,
+    type: mongoose.Schema.Types.ObjectId,
     ref: "Product",
   },
   quantity: { type: Number },

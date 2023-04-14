@@ -1,9 +1,9 @@
 const express = require("express");
 const router = express();
-const {calculateMonthlyProfit}= require('../controllers/purchaseController')
+const {getAllProfits}= require('../controllers/purchaseController')
 
 //Get Monthly Profits
-router.get('/',calculateMonthlyProfit)
+router.get('/',getAllProfits)
 
 
 module.exports = router

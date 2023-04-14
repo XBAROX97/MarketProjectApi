@@ -5,10 +5,14 @@ const Debt = require("../models/debtModel");
 const Profits = require("../models/profitsModel");
 const leaderBoard = require("../models/leaderboard")
 const LeaderboardController = require('./leaderBoardController')
+const archivedUser = require('../models/archivedUsers');
+const profits = require('../models/profitsModel')
+
 
 const PurchaseController = async (req, res) => {
   try {
     const { userId, productId, quantity } = req.body;
+    const profit = await profits.find()
 
     const user = await Users.findById(userId);
     const product = await Product.findById(productId);
@@ -50,14 +54,14 @@ const PurchaseController = async (req, res) => {
 
       user.points += 5; // Update user points
 
-      ard = await leaderBoard.findOne({ user: userId });
-      if (leaderBoard) {
-        leaderBoard.points += 5;
-        await leaderBoard.save();
-      } else {
-        const newLeaderboard = new leaderBoard({ user: userId, points: 5 });
-        await newLeaderboard.save();
-      }
+      // ard = await leaderBoard.findOne({ user: userId });
+      // if (leaderBoard) {
+      //   leaderBoard.points += 5;
+      //   await leaderBoard.save();
+      // } else {
+      //   const newLeaderboard = new leaderBoard({ user: userId, points: 5 });
+      //   await newLeaderboard.save();
+      // }
 
 
       await purchase.save();
@@ -86,17 +90,19 @@ const PurchaseController = async (req, res) => {
         product: productId,
         quantity: req.body.quantity,
         totalCost,
+        profit
       });
 
+     
       user.points += 10; // Update user points
-      ard = await leaderBoard.findOne({ user: userId });
-      if (leaderBoard) {
-        leaderBoard.points += 10;
-        await leaderBoard.save();
-      } else {
-        const newLeaderboard = new leaderBoard({ user: userId, points: 5 });
-        await newLeaderboard.save();
-      }
+      // ard = await leaderBoard.findOne({ user: userId });
+      // if (leaderBoard) {
+      //   leaderBoard.points += 10;
+      //   await leaderBoard.save();
+      // } else {
+      //   const newLeaderboard = new leaderBoard({ user: userId, points: 5 });
+      //   await newLeaderboard.save();
+      // }
 
 
       await purchase.save();
@@ -114,6 +120,7 @@ const PurchaseController = async (req, res) => {
         },
         quantity,
         totalCost,
+        profit
       };
 
       res.status(201).json(response);
@@ -127,52 +134,105 @@ const PurchaseController = async (req, res) => {
   }
 };
 
-//Get all purchases
 const getAllPurchases = async (req, res) => {
   try {
+    // Fetch all archived users
+    const archivedUsers = await archivedUser.find({});
+
+    // Array to store all purchases made by archived users
+    let archivedPurchases = [];
+
+    // Loop through all archived users
+    for (const user of archivedUsers) {
+      // Fetch all purchases made by the current archived user
+      const purchases = await Purchase.find({ user:user.id });
+
+      // Loop through all purchases made by the current archived user
+      for (const purchase of purchases) {
+        // Fetch the user and product details for the current purchase
+        const user = await Users.findById(purchase.user);
+        const product = await Product.findById(purchase.product);
+
+        // If the user or product cannot be found, skip the current purchase
+        if (!user || !product) {
+          continue;
+        }
+
+        // Add the purchase data to the archivedPurchases array
+        const purchaseData = {
+          id: purchase._id,
+          archivedUser: {
+            id: purchase.user,
+            name: user.name,
+            points: user.points,
+          },
+          product: {
+            id: purchase.product,
+            name: product.name,
+          },
+          quantity: purchase.quantity,
+          totalCost: purchase.totalCost,
+          archivedAt: user.deletedAt, // Add the timestamp when the user was archived
+        };
+        archivedPurchases.push(purchaseData);
+      }
+    }
+
+
+    // Fetch all purchases made by active users
     const purchases = await Purchase.find({});
     const response = [];
+
+    // Loop through all purchases made by active users
     for (const purchase of purchases) {
+      // Fetch the user and product details for the current purchase
       const user = await Users.findById(purchase.user);
       const product = await Product.findById(purchase.product);
+
+      // If the user or product cannot be found, skip the current purchase
       if (!user || !product) {
         continue;
       }
+
+      // Add the purchase data to the response array
       const purchaseData = {
         id: purchase._id,
         user: {
           id: purchase.user,
           name: user.name,
-          points: user.points
+          points: user.points,
         },
         product: {
           id: purchase.product,
-          name: product.name
+          name: product.name,
         },
         quantity: purchase.quantity,
-        totalCost: purchase.totalCost
+        totalCost: purchase.totalCost,
       };
       response.push(purchaseData);
     }
-    res.json(response);
+
+    // Combine the purchase history of active and archived users into a single response
+    const allPurchases = response.concat(archivedPurchases);
+    res.json(allPurchases);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Internal server error" });
   }
-}
+};
+  
+
 
 //Calculate monthly profits
 
 const calculateMonthlyProfit = async () => {
-
   const currentMonth = new Date().toLocaleString("default", {
     month: "long",
   });
 
   const products = await Product.find();
 
-  var totalProfit = 0;
-
+  let totalProfit = 0;
 
   for (const product of products) {
     const profit = Number(product.price) - Number(product.retailPrice);
@@ -184,18 +244,38 @@ const calculateMonthlyProfit = async () => {
     }
   }
 
+  try {
+    // Find the profits document for the current month
+    let profits = await Profits.findOne({ month: currentMonth });
 
-  const profits = await Profits.findOneAndUpdate(
-    { month: currentMonth },
-    { $set: { totalProfit: totalProfit } },
-    { new: true, upsert: true }
-  );
+    if (profits) {
+      // If the document exists, update the totalProfit field
+      profits.totalProfit = totalProfit;
+      await profits.save();
+    } else {
+      // If the document does not exist, create a new document
+      profits = new Profits({ month: currentMonth, totalProfit: totalProfit });
+      await profits.save();
+    }
 
-  return profits
-
-
+    return profits;
+  } catch (error) {
+    console.error(error);
+    throw new Error("Failed to calculate monthly profit");
+  }
 };
 
+//Get all profits
+   const getAllProfits = async (req,res)=>{
+    try{
+const profits = await Profits.find()
+res.status(200).json(profits)
+   }catch(err){
+    res.status(400).json({message: err})
+   }
+  }
 
-module.exports = { PurchaseController, getAllPurchases, calculateMonthlyProfit };
+
+
+module.exports = { PurchaseController, getAllPurchases, getAllProfits };
 
