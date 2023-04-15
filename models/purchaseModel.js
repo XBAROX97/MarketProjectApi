@@ -1,7 +1,5 @@
-// models/Purchase.js
 
 const mongoose = require("mongoose");
-
 
 
 const purchaseSchema = new mongoose.Schema({
@@ -20,7 +18,9 @@ const purchaseSchema = new mongoose.Schema({
     ref: "Product",
   },
   quantity: { type: Number },
+
   totalCost: { type: Number },
+
   purchaseDate: {
     type: Date,
     default: Date.now,

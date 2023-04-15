@@ -2,24 +2,31 @@ const mongoose = require('mongoose')
 
 
 const leaderSchema = new mongoose.Schema({
+    userId: {
+        type:mongoose.Schema.Types.ObjectId,
+        ref:"User",
+        unique: true,
+        required: true
 
-Users:{
-    type:mongoose.Schema.Types.ObjectId,
-    ref:"User"
-},
 
-points:{
-    type:Number,
-    default:0
-    
-},
+    },
+    userName: {
+        type: String,
 
-date:{
-    type:Date,
-    default:Date.now()
-}
+    },
+
+    points: {
+        type: Number,
+        default: 0
+
+    },
+
+    date: {
+        type: Date,
+        default: Date.now()
+    }
 
 })
 
 
-module.exports = mongoose.model('LeaderBoard',leaderSchema)
+module.exports = mongoose.model('LeaderBoard', leaderSchema)

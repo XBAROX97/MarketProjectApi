@@ -3,10 +3,8 @@ const Product = require("../models/productsModel");
 const Purchase = require("../models/purchaseModel.js");
 const Debt = require("../models/debtModel");
 const Profits = require("../models/profitsModel");
-const leaderBoard = require("../models/leaderboard");
-const LeaderboardController = require("./leaderBoardController");
 const archivedUser = require("../models/archivedUsers");
-const profits = require("../models/profitsModel");
+const leaderboard = require("../models/leaderboard");
 
 
 
@@ -14,7 +12,6 @@ const profits = require("../models/profitsModel");
 const PurchaseController = async (req, res) => {
   try {
     const { userId, productId, quantity } = req.body;
-    const profit = await profits.find();
 
     const user = await Users.findById(userId);
     const product = await Product.findById(productId);
@@ -54,16 +51,7 @@ const PurchaseController = async (req, res) => {
       user.debt += debt.amount;
       user.budget = 0;
 
-      user.points += 5; // Update user points
-
-      // ard = await leaderBoard.findOne({ user: userId });
-      // if (leaderBoard) {
-      //   leaderBoard.points += 5;
-      //   await leaderBoard.save();
-      // } else {
-      //   const newLeaderboard = new leaderBoard({ user: userId, points: 5 });
-      //   await newLeaderboard.save();
-      // }
+      user.points += 5;
 
       await purchase.save();
       const response = {
@@ -83,6 +71,19 @@ const PurchaseController = async (req, res) => {
 
       await user.save();
       res.status(201).json(response);
+
+      var existingLeaderboard = await leaderboard.findById(userId);
+     
+      if (!existingLeaderboard) {
+        existingLeaderboard = new leaderboard({
+          userId: user._id,
+          userName: user.name,
+          points: user.points,
+        });
+      } else{
+        existingLeaderboard +=user.points
+      }
+      await existingLeaderboard.save()
 
       await calculateMonthlyProfit();
     } else {
@@ -92,17 +93,10 @@ const PurchaseController = async (req, res) => {
         quantity: req.body.quantity,
         totalCost,
 
-      });
+      }
+      );
 
-      user.points += 10; // Update user points
-      // ard = await leaderBoard.findOne({ user: userId });
-      // if (leaderBoard) {
-      //   leaderBoard.points += 10;
-      //   await leaderBoard.save();
-      // } else {
-      //   const newLeaderboard = new leaderBoard({ user: userId, points: 5 });
-      //   await newLeaderboard.save();
-      // }
+      user.points += 15; // Update user points
 
       await purchase.save();
 
@@ -125,6 +119,20 @@ const PurchaseController = async (req, res) => {
       res.status(201).json(response);
 
       await user.save();
+
+      var existingLeaderboard = await leaderboard.findById(userId);
+     
+      if (!existingLeaderboard) {
+        existingLeaderboard = new leaderboard({
+          userId: user._id,
+          userName: user.name,
+          points: user.points,
+        });
+      } else{
+        existingLeaderboard +=user.points
+      }
+      await existingLeaderboard.save();
+     
       await calculateMonthlyProfit();
     }
   } catch (error) {
@@ -196,7 +204,7 @@ const getAllPurchases = async (req, res) => {
       };
       response.push(purchaseData);
     }
-    const allPurchases = [archivedPurchases,response]
+    const allPurchases = [archivedPurchases, response]
     res.json(allPurchases);
   } catch (error) {
     console.error(error);
@@ -205,7 +213,6 @@ const getAllPurchases = async (req, res) => {
 };
 
 //Calculate monthly profits
-
 const calculateMonthlyProfit = async () => {
   const currentMonth = new Date().toLocaleString("default", {
     month: "long",

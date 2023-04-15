@@ -27,6 +27,7 @@ app.use("/api/users", require("./routes/userRoutes.js"));
 app.use("/api/purchase", require("./routes/purchasesRoutes"));
 app.use('/api/profits', require("./routes/profitsRoutes"))
 app.use('/api/boxes', require("./routes/boxesRoutes"))
+app.use('/api/leaderBoard',require("./routes/leaderBoardRoutes"))
 
 //Server Port
 const port = 4040;

@@ -1,7 +1,4 @@
-const express = require('express')
 const mongoose = require('mongoose');
-
-
 
 const profitsSchema = new mongoose.Schema({
   month: {
