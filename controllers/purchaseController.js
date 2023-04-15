@@ -8,6 +8,9 @@ const LeaderboardController = require("./leaderBoardController");
 const archivedUser = require("../models/archivedUsers");
 const profits = require("../models/profitsModel");
 
+
+
+//Post Purchases
 const PurchaseController = async (req, res) => {
   try {
     const { userId, productId, quantity } = req.body;
@@ -88,7 +91,7 @@ const PurchaseController = async (req, res) => {
         product: productId,
         quantity: req.body.quantity,
         totalCost,
-        profit,
+
       });
 
       user.points += 10; // Update user points
@@ -116,7 +119,7 @@ const PurchaseController = async (req, res) => {
         },
         quantity,
         totalCost,
-        profit,
+
       };
 
       res.status(201).json(response);
@@ -130,31 +133,20 @@ const PurchaseController = async (req, res) => {
   }
 };
 
+//Get all Purchases
 const getAllPurchases = async (req, res) => {
   try {
-    // Fetch all archived users
     const archivedUsers = await archivedUser.find({});
 
-    // Array to store all purchases made by archived users
     let archivedPurchases = [];
-
-    // Loop through all archived users
-    for (const user of archivedUsers) {
+    for (const archivedUser of archivedUsers) {
       // Fetch all purchases made by the current archived user
-      const purchases = await Purchase.find({ user: user.id });
-
-      // Loop through all purchases made by the current archived user
+      const purchases = await Purchase.find({ archivedUser: archivedUser.id });
       for (const purchase of purchases) {
-        // Fetch the user and product details for the current purchase
+
         const user = await Users.findById(purchase.user);
         const product = await Product.findById(purchase.product);
 
-        // If the user or product cannot be found, skip the current purchase
-        if (!user || !product) {
-          continue;
-        }
-
-        // Add the purchase data to the archivedPurchases array
         const purchaseData = {
           id: purchase._id,
           archivedUser: {
@@ -171,25 +163,19 @@ const getAllPurchases = async (req, res) => {
         archivedPurchases.push(purchaseData);
       }
     }
-
-    // Fetch all purchases made by active users
     const purchases = await Purchase.find({});
     const response = [];
 
-    console.log(archivedPurchases);
-
-    // Loop through all purchases made by active users
     for (const purchase of purchases) {
-      // Fetch the user and product details for the current purchase
+
       const user = await Users.findById(purchase.user);
       const product = await Product.findById(purchase.product);
 
-      // If the user or product cannot be found, skip the current purchase
+
       if (!user || !product) {
         continue;
       }
 
-      // Add the purchase data to the response array
       const purchaseData = {
         id: purchase._id,
         user: {
@@ -206,9 +192,7 @@ const getAllPurchases = async (req, res) => {
       };
       response.push(purchaseData);
     }
-
-    // Combine the purchase history of active and archived users into a single response
-    const allPurchases = response.concat(archivedPurchases);
+    const allPurchases = [archivedPurchases,response]
     res.json(allPurchases);
   } catch (error) {
     console.error(error);

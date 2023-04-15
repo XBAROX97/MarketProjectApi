@@ -74,7 +74,6 @@ const deleteUser = async (req, res) => {
   
     }
     
-
     // Delete the user
     await Users.deleteOne({ _id: req.params.id });
 
