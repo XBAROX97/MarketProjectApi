@@ -5,11 +5,14 @@ controller.use(express.json());
 controller.use(express.urlencoded({ extended: false }));
 const ArchivedUser = require("../models/archivedUsers");
 const Purchase = require("../models/purchaseModel");
-const archivedUsers = require("../models/archivedUsers");
+const leaderboard = require("../models/leaderboard")
+
+
 //Get all users
 const getUsers = async (req, res) => {
   try {
     const users = await Users.find();
+
     res.status(200).json(users);
   } catch (err) {
     res.status(400).json({ message: err });
@@ -34,9 +37,18 @@ const postUsers = async (req, res) => {
     timeStamp: req.body.timeStamp,
   });
 
+  const leader = new leaderboard({
+   userId: users._id,
+    userName : users.name,
+    points: users.points
+
+  })
+
   try {
+    const savedLeader = await leader.save()
     const savedUsers = await users.save();
-    res.status(200).json(savedUsers);
+    const response = [savedLeader,savedUsers]
+    res.status(200).json(response);
   } catch (err) {
     res.status(400).json({ message: err });
   }

@@ -1,4 +1,3 @@
-const express = require('express')
 const mongoose = require('mongoose')
 
 const productsSchema = new mongoose.Schema({
@@ -57,6 +56,11 @@ const productsSchema = new mongoose.Schema({
         type: Number,
         required: true
     },
+
+    purchases:{
+        type: Number,
+        default:0
+    }
 })
 
 productsSchema.pre('save', function (next) {

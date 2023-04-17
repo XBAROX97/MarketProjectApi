@@ -5,16 +5,18 @@ const Debt = require("../models/debtModel");
 const Profits = require("../models/profitsModel");
 const archivedUser = require("../models/archivedUsers");
 const leaderboard = require("../models/leaderboard");
+const boxes = require("../models/boxesModel")
 
 
 
 //Post Purchases
 const PurchaseController = async (req, res) => {
-  try {
+  // try {
     const { userId, productId, quantity } = req.body;
 
     const user = await Users.findById(userId);
     const product = await Product.findById(productId);
+    const box = await boxes.findOne({productId: productId})
 
     if (user == null || product == null) {
       return res.status(404).json({ message: "User or product not found" });
@@ -29,7 +31,11 @@ const PurchaseController = async (req, res) => {
 
     user.budget -= totalCost;
 
+
     product.quantityInPieces -= quantity;
+    const nbOfPurchases = (product.purchases + quantity)
+
+   
 
     await product.save(); // Save product first
 
@@ -72,18 +78,10 @@ const PurchaseController = async (req, res) => {
       await user.save();
       res.status(201).json(response);
 
-      var existingLeaderboard = await leaderboard.findById(userId);
-     
-      if (!existingLeaderboard) {
-        existingLeaderboard = new leaderboard({
-          userId: user._id,
-          userName: user.name,
-          points: user.points,
-        });
-      } else{
-        existingLeaderboard +=user.points
-      }
-      await existingLeaderboard.save()
+      var Leaderboard = await leaderboard.findOne({ userId: userId });
+      Leaderboard.points += 5
+
+      await Leaderboard.save()
 
       await calculateMonthlyProfit();
     } else {
@@ -96,7 +94,7 @@ const PurchaseController = async (req, res) => {
       }
       );
 
-      user.points += 15; // Update user points
+      user.points += 10; // Update user points
 
       await purchase.save();
 
@@ -120,26 +118,25 @@ const PurchaseController = async (req, res) => {
 
       await user.save();
 
-      var existingLeaderboard = await leaderboard.findById(userId);
+      var Leaderboard = await leaderboard.findOne({ userId: userId });
+      Leaderboard.points += 10
+
+      await Leaderboard.save();
      
-      if (!existingLeaderboard) {
-        existingLeaderboard = new leaderboard({
-          userId: user._id,
-          userName: user.name,
-          points: user.points,
-        });
-      } else{
-        existingLeaderboard +=user.points
-      }
-      await existingLeaderboard.save();
-     
+
       await calculateMonthlyProfit();
+
+      if(nbOfPurchases % box.productQuantity ===0){
+        box.quantity -=1
+      }
+      await box.save()
     }
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Internal server error" });
-  }
-};
+  // } catch (err) {
+  //   res.json({ message: err })
+  // }
+
+}
+
 
 //Get all Purchases
 const getAllPurchases = async (req, res) => {
