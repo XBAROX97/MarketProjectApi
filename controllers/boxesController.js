@@ -68,13 +68,12 @@ const get1Box = async (req, res) => {
 const updateBoxes = async (req, res) => {
     try {
         const boxe = await boxes.findById(req.params.id)
-        const oldQuantity = parseInt(boxe.quantity)
-        const newQuantity = parseInt(oldQuantity) + parseInt(req.body.quantity)
+       
         const box = await boxes.findOneAndUpdate(
             { _id: req.params.id },
             {
                 $set: {
-                    quantity: newQuantity,
+                    quantity: req.body.quantity,
                     name: req.body.name,
                     productQuantity: req.body.productQuantity,
                     price: req.body.price
@@ -92,10 +91,8 @@ const updateBoxes = async (req, res) => {
 
         if (req.body.quantity != null) {
 
-            if (req.body.quantity > boxe.quantity) {
                 const product1 = await Product.findById(req.body.productId)
-                const oldProductQuantity = product1.quantityInPieces
-                const newProductQuantity = oldProductQuantity + (req.body.quantity * req.body.productQuantity)
+                const newProductQuantity = (req.body.productQuantity * req.body.quantity) - product1.purchases
                 const product = await Product.findOneAndUpdate(
                     { _id: req.body.productId },
                     {
@@ -105,33 +102,15 @@ const updateBoxes = async (req, res) => {
                     },
                     { new: true })
                 await product.save();
-            }
-
-            if (req.body.quantity < boxe.quantity) {
-                const product1 = await Product.findById(req.body.productId)
-                const oldProductQuantity = product1.quantityInPieces
-                const newProductQuantity = oldProductQuantity - (req.body.quantity * boxe.productQuantity)
-                const product = await Product.findOneAndUpdate(
-                    { _id: req.body.productId },
-                    {
-                        $set: {
-                            quantityInPieces: newProductQuantity
-                        }
-                    },
-                    { new: true })
-                await product.save();
-            }
-            else
-                return
-        }
+        
         return res.status(200).json(box);
 
+    }
     } catch (err) {
         console.error(err);
         return res.status(500).json({ message: "An error occurred while updating the box!" });
-    }
 }
-
+}
 
 // DELETE a box
 const deleteBoxes = async (req, res) => {

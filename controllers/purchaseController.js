@@ -33,7 +33,8 @@ const PurchaseController = async (req, res) => {
 
 
     product.quantityInPieces -= quantity;
-    const nbOfPurchases = (product.purchases + quantity)
+    product.purchases += quantity
+    const nbOfPurchases = product.purchases 
 
    
 
@@ -126,10 +127,11 @@ const PurchaseController = async (req, res) => {
 
       await calculateMonthlyProfit();
 
-      if(nbOfPurchases % box.productQuantity ===0){
+      if(nbOfPurchases % box.productQuantity === 0){
         box.quantity -=1
+        await box.save()
       }
-      await box.save()
+     
     }
   // } catch (err) {
   //   res.json({ message: err })
