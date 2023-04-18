@@ -126,8 +126,9 @@ const PurchaseController = async (req, res) => {
      
 
       await calculateMonthlyProfit();
+      const productsInBox = box.productQuantity
 
-      if(nbOfPurchases % box.productQuantity === 0){
+      if(nbOfPurchases % productsInBox === 0){
         box.quantity -=1
         await box.save()
       }

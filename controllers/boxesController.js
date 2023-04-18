@@ -5,6 +5,7 @@ const boxes = require('../models/boxesModel')
 //post products boxes
 const postBoxes = async (req, res) => {
     try {
+
         const box = new boxes({
             quantity: req.body.quantity,
             productQuantity: req.body.productQuantity,
@@ -13,11 +14,7 @@ const postBoxes = async (req, res) => {
             productId: req.body.productId,
         });
 
-
-        // const originalQuantityInPieces = req.body.originalQuantityInPieces;
-
-        const savedBox = await box.save();
-
+    
         // update the quantity of products in the Product model
         const product = await Product.findById(req.body.productId);
         if (!product) {
@@ -25,11 +22,14 @@ const postBoxes = async (req, res) => {
         }
 
         product.quantityInPieces += req.body.productQuantity * req.body.quantity;
-        // product.quantityInPieces = product.totalNumberOfPieces
-
-
-        // product.originalQuantityInPieces = originalQuantityInPieces;
+        
         await product.save();
+       
+        if(req.body.name != product.name){
+            throw new Error("Product and box should have the same names!")
+        }
+
+        const savedBox = await box.save();
 
         res.status(201).json(savedBox);
     } catch (error) {
@@ -64,10 +64,13 @@ const get1Box = async (req, res) => {
 }
 
 //update boxes
+//In the front the update box should be a counter
 
 const updateBoxes = async (req, res) => {
     try {
         const boxe = await boxes.findById(req.params.id)
+        const boxQty = req.body.quantity
+        const productQty = req.body.productQuantity
        
         const box = await boxes.findOneAndUpdate(
             { _id: req.params.id },
@@ -91,8 +94,10 @@ const updateBoxes = async (req, res) => {
 
         if (req.body.quantity != null) {
 
+            if(boxQty > boxe.quantity){
+
                 const product1 = await Product.findById(req.body.productId)
-                const newProductQuantity = (req.body.productQuantity * req.body.quantity) - product1.purchases
+                const newProductQuantity = parseInt(productQty) + product1.quantityInPieces
                 const product = await Product.findOneAndUpdate(
                     { _id: req.body.productId },
                     {
@@ -101,7 +106,23 @@ const updateBoxes = async (req, res) => {
                         }
                     },
                     { new: true })
-                await product.save();
+                await product1.save();}
+
+                if(boxQty < boxe.quantity){
+
+                    const product1 = await Product.findById(req.body.productId)
+                    const newProductQuantity = product1.quantityInPieces - parseInt( productQty)
+                    const product = await Product.findOneAndUpdate(
+                        { _id: req.body.productId },
+                        {
+                            $set: {
+                                quantityInPieces: newProductQuantity
+                            }
+                        },
+                        { new: true })
+                    await product1.save();
+
+                }
         
         return res.status(200).json(box);
 
