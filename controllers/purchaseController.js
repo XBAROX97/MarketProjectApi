@@ -12,128 +12,125 @@ const boxes = require("../models/boxesModel")
 //Post Purchases
 const PurchaseController = async (req, res) => {
   // try {
-    const { userId, productId, quantity } = req.body;
+  const { userId, productId, quantity } = req.body;
 
-    const user = await Users.findById(userId);
-    const product = await Product.findById(productId);
-    const box = await boxes.findOne({productId: productId})
+  const user = await Users.findById(userId);
+  const product = await Product.findById(productId);
+  const box = await boxes.findOne({ productId: productId })
 
-    if (user == null || product == null) {
-      return res.status(404).json({ message: "User or product not found" });
+  if (user == null || product == null) {
+    return res.status(404).json({ message: "User or product not found" });
+  }
+
+  const totalCost = quantity * product.price;
+  const remainingBudget = user.budget - totalCost;
+
+  if (product.quantityInPieces < quantity) {
+    return res.status(400).json({ message: "Not enough quantity" });
+  }
+
+  user.budget -= totalCost;
+
+  let proPurchase = parseInt(product.purchases)
+  product.quantityInPieces -= quantity;
+  proPurchase += parseInt (quantity)
+  product.purchases = parseInt(proPurchase)
+  await product.save(); // Save product first
+
+  if (remainingBudget < 0) {
+    const debt = new Debt({
+      user: userId,
+      amount: Math.abs(remainingBudget),
+      date: new Date(),
+    });
+
+    const purchase = new Purchase({
+      user: userId,
+      product: productId,
+      quantity: req.body.quantity,
+      totalCost,
+    });
+    await debt.save();
+
+    user.debt += debt.amount;
+    user.budget = 0;
+
+    user.points += 5;
+
+    await purchase.save();
+    const response = {
+      id: purchase._id,
+      user: {
+        id: userId,
+        name: user.name,
+        points: user.points,
+      },
+      product: {
+        id: productId,
+        name: product.name,
+      },
+      quantity,
+      totalCost,
+    };
+
+    await user.save();
+    res.status(201).json(response);
+
+    var Leaderboard = await leaderboard.findOne({ userId: userId });
+    Leaderboard.points += 5
+
+    await Leaderboard.save()
+
+    await calculateMonthlyProfit();
+  } else {
+    const purchase = new Purchase({
+      user: userId,
+      product: productId,
+      quantity: req.body.quantity,
+      totalCost,
+
+    }
+    );
+
+    user.points += 10; // Update user points
+
+    await purchase.save();
+
+    const response = {
+      id: purchase._id,
+      user: {
+        id: userId,
+        name: user.name,
+        points: user.points,
+      },
+      product: {
+        id: productId,
+        name: product.name,
+      },
+      quantity,
+      totalCost,
+
+    };
+
+    res.status(201).json(response);
+
+    await user.save();
+
+    var Leaderboard = await leaderboard.findOne({ userId: userId });
+    Leaderboard.points += 10
+
+    await Leaderboard.save();
+
+
+    await calculateMonthlyProfit();
+    const productsInBox = box.productQuantity
+
+    if (nbOfPurchases % productsInBox === 0) {
+      box.quantity -= 1
+      await box.save()
     }
 
-    const totalCost = quantity * product.price;
-    const remainingBudget = user.budget - totalCost;
-
-    if (product.quantityInPieces < quantity) {
-      return res.status(400).json({ message: "Not enough quantity" });
-    }
-
-    user.budget -= totalCost;
-
-
-    product.quantityInPieces -= quantity;
-    product.purchases += quantity
-    const nbOfPurchases = product.purchases 
-
-   
-
-    await product.save(); // Save product first
-
-    if (remainingBudget < 0) {
-      const debt = new Debt({
-        user: userId,
-        amount: Math.abs(remainingBudget),
-        date: new Date(),
-      });
-
-      const purchase = new Purchase({
-        user: userId,
-        product: productId,
-        quantity: req.body.quantity,
-        totalCost,
-      });
-      await debt.save();
-
-      user.debt += debt.amount;
-      user.budget = 0;
-
-      user.points += 5;
-
-      await purchase.save();
-      const response = {
-        id: purchase._id,
-        user: {
-          id: userId,
-          name: user.name,
-          points: user.points,
-        },
-        product: {
-          id: productId,
-          name: product.name,
-        },
-        quantity,
-        totalCost,
-      };
-
-      await user.save();
-      res.status(201).json(response);
-
-      var Leaderboard = await leaderboard.findOne({ userId: userId });
-      Leaderboard.points += 5
-
-      await Leaderboard.save()
-
-      await calculateMonthlyProfit();
-    } else {
-      const purchase = new Purchase({
-        user: userId,
-        product: productId,
-        quantity: req.body.quantity,
-        totalCost,
-
-      }
-      );
-
-      user.points += 10; // Update user points
-
-      await purchase.save();
-
-      const response = {
-        id: purchase._id,
-        user: {
-          id: userId,
-          name: user.name,
-          points: user.points,
-        },
-        product: {
-          id: productId,
-          name: product.name,
-        },
-        quantity,
-        totalCost,
-
-      };
-
-      res.status(201).json(response);
-
-      await user.save();
-
-      var Leaderboard = await leaderboard.findOne({ userId: userId });
-      Leaderboard.points += 10
-
-      await Leaderboard.save();
-     
-
-      await calculateMonthlyProfit();
-      const productsInBox = box.productQuantity
-
-      if(nbOfPurchases % productsInBox === 0){
-        box.quantity -=1
-        await box.save()
-      }
-     
-    }
+  }
   // } catch (err) {
   //   res.json({ message: err })
   // }
@@ -224,14 +221,13 @@ const calculateMonthlyProfit = async () => {
 
   for (const product of products) {
     const profit = Number(product.price) - Number(product.retailPrice);
-    const quantitySold =
-      Number(product.totalNumberOfPieces) - Number(product.quantityInPieces);
-    if (isNaN(profit) || isNaN(quantitySold)) {
-      continue;
-    } else {
+    
+    const quantitySold = Number(product.totalNumberOfPieces) - Number(product.quantityInPieces);
+    console.log(quantitySold)
+   
       totalProfit += profit * quantitySold;
     }
-  }
+  
 
   try {
     // Find the profits document for the current month
