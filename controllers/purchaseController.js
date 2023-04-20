@@ -17,6 +17,7 @@ const PurchaseController = async (req, res) => {
   const user = await Users.findById(userId);
   const product = await Product.findById(productId);
   const box = await boxes.findOne({ productId: productId })
+  const nbOfPurchases = product.purchases
 
   if (user == null || product == null) {
     return res.status(404).json({ message: "User or product not found" });
@@ -222,10 +223,11 @@ const calculateMonthlyProfit = async () => {
   for (const product of products) {
     const profit = Number(product.price) - Number(product.retailPrice);
     
-    const quantitySold = Number(product.totalNumberOfPieces) - Number(product.quantityInPieces);
+    const quantitySold = product.purchases
     console.log(quantitySold)
    
       totalProfit += profit * quantitySold;
+      console.log(totalProfit)
     }
   
 
