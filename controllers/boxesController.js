@@ -103,7 +103,7 @@ const updateBoxes = async (req, res) => {
                         }
                     },
                     { new: true })
-                await product1.save();}
+                await product.save();}
 
                 if(boxQty < boxe.quantity){
 
@@ -117,7 +117,7 @@ const updateBoxes = async (req, res) => {
                             }
                         },
                         { new: true })
-                    await product1.save();
+                    await product.save();
 
                 }
         
