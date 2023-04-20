@@ -17,7 +17,7 @@ const PurchaseController = async (req, res) => {
   const user = await Users.findById(userId);
   const product = await Product.findById(productId);
   const box = await boxes.findOne({ productId: productId })
-  const nbOfPurchases = product.purchases
+
 
   if (user == null || product == null) {
     return res.status(404).json({ message: "User or product not found" });
@@ -34,7 +34,7 @@ const PurchaseController = async (req, res) => {
 
   let proPurchase = parseInt(product.purchases)
   product.quantityInPieces -= quantity;
-  proPurchase += parseInt (quantity)
+  proPurchase += parseInt(quantity)
   product.purchases = parseInt(proPurchase)
   await product.save(); // Save product first
 
@@ -125,11 +125,13 @@ const PurchaseController = async (req, res) => {
 
     await calculateMonthlyProfit();
     const productsInBox = box.productQuantity
-
+   
+    if (product && product.purchases) {
+      const nbOfPurchases = product.purchases;
     if (nbOfPurchases % productsInBox === 0) {
       box.quantity -= 1
       await box.save()
-    }
+    }}
 
   }
   // } catch (err) {
@@ -222,14 +224,14 @@ const calculateMonthlyProfit = async () => {
 
   for (const product of products) {
     const profit = Number(product.price) - Number(product.retailPrice);
-    
+
     const quantitySold = product.purchases
     console.log(quantitySold)
-   
-      totalProfit += profit * quantitySold;
-      console.log(totalProfit)
-    }
-  
+
+    totalProfit += profit * quantitySold;
+    console.log(totalProfit)
+  }
+
 
   try {
     // Find the profits document for the current month

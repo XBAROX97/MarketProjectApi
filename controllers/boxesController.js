@@ -25,10 +25,7 @@ const postBoxes = async (req, res) => {
         
         await product.save();
        
-        if(req.body.name != product.name){
-            throw new Error("Product and box should have the same names!")
-        }
-
+    
         const savedBox = await box.save();
 
         res.status(201).json(savedBox);

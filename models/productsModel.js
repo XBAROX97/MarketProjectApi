@@ -57,10 +57,10 @@ const productsSchema = new mongoose.Schema({
         required: true
     },
 
-    purchases:{
-        type: Number,
-        default:0
-    }
+   purchases:{
+    type:Number,
+    default:0
+   }
 })
 
 productsSchema.pre('save', function (next) {
