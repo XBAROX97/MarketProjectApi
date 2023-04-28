@@ -151,8 +151,6 @@ const getAllPurchases = async (req, res) => {
       // Fetch all purchases made by the current archived user
       const purchases = await Purchase.find({ archivedUser: archivedUser.id });
       for (const purchase of purchases) {
-
-        const user = await Users.findById(purchase.user);
         const product = await Product.findById(purchase.product);
 
         if (!archivedUsers || !product) {
@@ -163,7 +161,7 @@ const getAllPurchases = async (req, res) => {
           id: purchase._id,
           archivedUser: {
             id: purchase.archivedUser,
-            name: archivedUsers.username,
+            name: archivedUser.username,
           },
           product: {
             id: purchase.product,

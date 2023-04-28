@@ -5,7 +5,8 @@ controller.use(express.json());
 controller.use(express.urlencoded({ extended: false }));
 const ArchivedUser = require("../models/archivedUsers");
 const Purchase = require("../models/purchaseModel");
-const leaderboard = require("../models/leaderboard")
+const leaderboard = require("../models/leaderboard");
+const archivedUsers = require("../models/archivedUsers");
 
 
 //Get all users
@@ -74,11 +75,13 @@ const deleteUser = async (req, res) => {
 
     // Find all purchases made by the user
     const purchases = await Purchase.find({ user: req.params.id });
-    
+  
+  
     // Archive the user's purchase history
     for (const purchase of purchases) {
       const archivedUser = new ArchivedUser({
         username: user.name,
+     
       });
       await archivedUser.save();
       purchase.archivedUser = archivedUser._id;
@@ -120,10 +123,22 @@ const updateUsers = async (req, res) => {
   }
 };
 
+//Get all Archived Users
+const getArchivedUsers = async (req, res) => {
+  try {
+    const archivedUser = await ArchivedUser.find();
+    res.status(200).json(archivedUser);
+  } catch (err) {
+    res.status(400).json({ message: err });
+  }
+};
+
+
 module.exports = {
   getUsers,
   postUsers,
   get1User,
   deleteUser,
   updateUsers,
+  getArchivedUsers
 };
