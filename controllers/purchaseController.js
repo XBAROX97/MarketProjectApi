@@ -50,6 +50,7 @@ const PurchaseController = async (req, res) => {
       product: productId,
       quantity: req.body.quantity,
       totalCost,
+      purchaseDate: new Date(),
     });
     await debt.save();
 
@@ -89,7 +90,7 @@ const PurchaseController = async (req, res) => {
       product: productId,
       quantity: req.body.quantity,
       totalCost,
-
+      purchaseDate: new Date(),
     }
     );
 
@@ -169,6 +170,7 @@ const getAllPurchases = async (req, res) => {
           },
           quantity: purchase.quantity,
           totalCost: purchase.totalCost,
+          purchaseDate: purchase.purchaseDate,
         };
         archivedPurchases.push(purchaseData);
       }
@@ -199,6 +201,7 @@ const getAllPurchases = async (req, res) => {
         },
         quantity: purchase.quantity,
         totalCost: purchase.totalCost,
+        purchaseDate: purchase.purchaseDate,
       };
       response.push(purchaseData);
     }

@@ -21,6 +21,10 @@ const leaderSchema = new mongoose.Schema({
 
     },
 
+    position: {
+        type: String,
+    },
+
     date: {
         type: Date,
         default: Date.now()

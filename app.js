@@ -31,7 +31,7 @@ app.use('/api/leaderBoard',require("./routes/leaderBoardRoutes"))
 app.use('/api/archivedUsers', require('./routes/archivedUsers'))
 
 //Server Port
-const port = 4000;
+const port = 4040;
 app.listen(port, (req, res) => {
   console.log("Server is running on port " + port);
 });

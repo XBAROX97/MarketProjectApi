@@ -41,8 +41,8 @@ const postUsers = async (req, res) => {
   const leader = new leaderboard({
    userId: users._id,
     userName : users.name,
-    points: users.points
-
+    points: users.points,
+    position: users.position
   })
 
   try {
