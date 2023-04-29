@@ -1,6 +1,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const Products = require("../models/productsModel");
+const boxes = require("../models/boxesModel");
 const controller = express()
 controller.use(express.json());
 controller.use(express.urlencoded({ extended: false }));
@@ -17,11 +18,15 @@ const allProducts = async (req, res) => {
 
 //Post products
 const postProducts = async (req, res) => {
+  const retail = req.body.retailPrice
+  const productRetail = parseInt(retail);
+  const priceOfProduct = productRetail + (retail * 0.2)
+
   const products = new Products({
-   
+
     name: req.body.name,
 
-    price: req.body.price,
+    price: priceOfProduct,
 
     category: req.body.category,
 
@@ -39,6 +44,8 @@ const postProducts = async (req, res) => {
 
     originalQuantityInPieces: req.body.originalQuantityInPieces
   });
+
+
   try {
     const savedProducts = await products.save();
     res.status(200).json(savedProducts);
@@ -59,46 +66,47 @@ const get1Product = async (req, res) => {
 
 //Delete products
 const deleteProduct = async (req, res) => {
- 
-    const removedProducts = await Products.deleteOne({ _id: req.params.id });
-    res.status(200).json(removedProducts);
 
-    console.log(`${removedProducts.deletedCount} product(s) have been deleted`);
+  await boxes.deleteOne({ productId: req.params.id });
+  const removedProducts = await Products.deleteOne({ _id: req.params.id });
+  res.status(200).json(removedProducts);
+
+  console.log(`${removedProducts.deletedCount} product(s) have been deleted`);
 };
 
 //Update Products
-const updateProducts = async(req,res)=>{
-try {
-  const updatedProduct = await Products.updateOne(
-    { _id: req.params.id },
-    {
-      $set: {
-        
-        name: req.body.name,
+const updateProducts = async (req, res) => {
+  try {
+    const updatedProduct = await Products.updateOne(
+      { _id: req.params.id },
+      {
+        $set: {
 
-        price: req.body.price,
+          name: req.body.name,
 
-        category: req.body.category,
 
-        quantityInPieces: req.body.quantityInPieces,
+          category: req.body.category,
 
-        quantityInBoxes: req.body.quantityInBoxes,
+          quantityInPieces: req.body.quantityInPieces,
 
-        retailPrice: req.body.retailPrice,
+          quantityInBoxes: req.body.quantityInBoxes,
 
-        Image: req.body.Image,
+          retailPrice: req.body.retailPrice,
 
-        serialNumber: req.body.serialNumber,
+          Image: req.body.Image,
 
-        originalQuantityInPieces: req.body.originalQuantityInPieces
-      },
-    }
-  );
-  res.json(updatedProduct);
-  console.log(`${updatedProduct.modifiedCount} Product(s) has been updated`);
-} catch (err) {
-  res.json({ message: err });
-}}
+          serialNumber: req.body.serialNumber,
+
+          originalQuantityInPieces: req.body.originalQuantityInPieces
+        },
+      }
+    );
+    res.json(updatedProduct);
+    console.log(`${updatedProduct.modifiedCount} Product(s) has been updated`);
+  } catch (err) {
+    res.json({ message: err });
+  }
+}
 
 
 
@@ -108,5 +116,5 @@ module.exports = {
   get1Product,
   deleteProduct,
   updateProducts,
- 
+
 };
