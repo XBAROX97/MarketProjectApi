@@ -5,9 +5,7 @@ const Debt = require("../models/debtModel");
 const Profits = require("../models/profitsModel");
 const archivedUser = require("../models/archivedUsers");
 const leaderboard = require("../models/leaderboard");
-const boxes = require("../models/boxesModel")
-
-
+const boxes = require("../models/boxesModel");
 
 //Post Purchases
 const PurchaseController = async (req, res) => {
@@ -16,8 +14,7 @@ const PurchaseController = async (req, res) => {
 
   const user = await Users.findById(userId);
   const product = await Product.findById(productId);
-  const box = await boxes.findOne({ productId: productId })
-
+  const box = await boxes.findOne({ productId: productId });
 
   if (user == null || product == null) {
     return res.status(404).json({ message: "User or product not found" });
@@ -29,20 +26,20 @@ const PurchaseController = async (req, res) => {
   if (product.quantityInPieces < quantity) {
     return res.status(400).json({ message: "Not enough quantity" });
   }
+  const Budget = user.budget - totalCost;
+  user.budget = Budget.toFixed(2);
 
-  user.budget -= totalCost;
-
-  let proPurchase = parseInt(product.purchases)
+  let proPurchase = parseInt(product.purchases);
   product.quantityInPieces -= quantity;
-  proPurchase += parseInt(quantity)
-  product.purchases = parseInt(proPurchase)
+  proPurchase += parseInt(quantity);
+  product.purchases = parseInt(proPurchase);
   await product.save(); // Save product first
 
   if (remainingBudget < 0) {
     const debt = new Debt({
       user: userId,
       amount: Math.abs(remainingBudget),
-      date: new Date(),
+      date: new Date()
     });
 
     const purchase = new Purchase({
@@ -50,11 +47,11 @@ const PurchaseController = async (req, res) => {
       product: productId,
       quantity: req.body.quantity,
       totalCost,
-      purchaseDate: new Date(),
+      purchaseDate: new Date()
     });
     await debt.save();
-
-    user.debt += debt.amount;
+    const newDebt = user.debt + debt.amount;
+    user.debt = newDebt.toFixed(2);
     user.budget = 0;
 
     user.points += 5;
@@ -65,23 +62,23 @@ const PurchaseController = async (req, res) => {
       user: {
         id: userId,
         name: user.name,
-        points: user.points,
+        points: user.points
       },
       product: {
         id: productId,
-        name: product.name,
+        name: product.name
       },
       quantity,
-      totalCost,
+      totalCost
     };
 
     await user.save();
     res.status(201).json(response);
 
     var Leaderboard = await leaderboard.findOne({ userId: userId });
-    Leaderboard.points += 5
+    Leaderboard.points += 5;
 
-    await Leaderboard.save()
+    await Leaderboard.save();
 
     await calculateMonthlyProfit();
   } else {
@@ -90,9 +87,8 @@ const PurchaseController = async (req, res) => {
       product: productId,
       quantity: req.body.quantity,
       totalCost,
-      purchaseDate: new Date(),
-    }
-    );
+      purchaseDate: new Date()
+    });
 
     user.points += 10; // Update user points
 
@@ -103,15 +99,14 @@ const PurchaseController = async (req, res) => {
       user: {
         id: userId,
         name: user.name,
-        points: user.points,
+        points: user.points
       },
       product: {
         id: productId,
-        name: product.name,
+        name: product.name
       },
       quantity,
-      totalCost,
-
+      totalCost
     };
 
     res.status(201).json(response);
@@ -119,28 +114,25 @@ const PurchaseController = async (req, res) => {
     await user.save();
 
     var Leaderboard = await leaderboard.findOne({ userId: userId });
-    Leaderboard.points += 10
+    Leaderboard.points += 10;
 
     await Leaderboard.save();
 
-
     await calculateMonthlyProfit();
-    const productsInBox = box.productQuantity
-   
+    const productsInBox = box.productQuantity;
+
     if (product && product.purchases) {
       const nbOfPurchases = product.purchases;
-    if (nbOfPurchases % productsInBox === 0) {
-      box.quantity -= 1
-      await box.save()
-    }}
-
+      if (nbOfPurchases % productsInBox === 0) {
+        box.quantity -= 1;
+        await box.save();
+      }
+    }
   }
   // } catch (err) {
   //   res.json({ message: err })
   // }
-
-}
-
+};
 
 //Get all Purchases
 const getAllPurchases = async (req, res) => {
@@ -162,15 +154,15 @@ const getAllPurchases = async (req, res) => {
           id: purchase._id,
           archivedUser: {
             id: purchase.archivedUser,
-            name: archivedUser.username,
+            name: archivedUser.username
           },
           product: {
             id: purchase.product,
-            name: product.name,
+            name: product.name
           },
           quantity: purchase.quantity,
           totalCost: purchase.totalCost,
-          purchaseDate: purchase.purchaseDate,
+          purchaseDate: purchase.purchaseDate
         };
         archivedPurchases.push(purchaseData);
       }
@@ -179,10 +171,8 @@ const getAllPurchases = async (req, res) => {
     const response = [];
 
     for (const purchase of purchases) {
-
       const user = await Users.findById(purchase.user);
       const product = await Product.findById(purchase.product);
-
 
       if (!user || !product) {
         continue;
@@ -193,19 +183,19 @@ const getAllPurchases = async (req, res) => {
         user: {
           id: purchase.user,
           name: user.name,
-          points: user.points,
+          points: user.points
         },
         product: {
           id: purchase.product,
-          name: product.name,
+          name: product.name
         },
         quantity: purchase.quantity,
         totalCost: purchase.totalCost,
-        purchaseDate: purchase.purchaseDate,
+        purchaseDate: purchase.purchaseDate
       };
       response.push(purchaseData);
     }
-    const allPurchases = [archivedPurchases, response]
+    const allPurchases = [archivedPurchases, response];
     res.json(allPurchases);
   } catch (error) {
     console.error(error);
@@ -216,7 +206,7 @@ const getAllPurchases = async (req, res) => {
 //Calculate monthly profits
 const calculateMonthlyProfit = async () => {
   const currentMonth = new Date().toLocaleString("default", {
-    month: "long",
+    month: "long"
   });
 
   const products = await Product.find();
@@ -226,13 +216,12 @@ const calculateMonthlyProfit = async () => {
   for (const product of products) {
     const profit = Number(product.price) - Number(product.retailPrice);
 
-    const quantitySold = product.purchases
-    console.log(quantitySold)
+    const quantitySold = product.purchases;
+    console.log(quantitySold);
 
     totalProfit += profit * quantitySold;
-    console.log(totalProfit)
+    console.log(totalProfit);
   }
-
 
   try {
     // Find the profits document for the current month
