@@ -29,6 +29,7 @@ app.use('/api/profits', require("./routes/profitsRoutes"))
 app.use('/api/boxes', require("./routes/boxesRoutes"))
 app.use('/api/leaderBoard',require("./routes/leaderBoardRoutes"))
 app.use('/api/archivedUsers', require('./routes/archivedUsers'))
+app.use('/api/history', require('./routes/historyRoutes'))
 
 //Server Port
 const port = 4040;
