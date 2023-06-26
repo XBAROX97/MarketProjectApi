@@ -12,7 +12,6 @@ const usersSchema = new mongoose.Schema({
     budget: {
         type: Number,
 
-
     },
 
     debt: {

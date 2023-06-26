@@ -16,7 +16,6 @@ const resetDebts = () => {
         }
         debtsByUser[debt.user].push(debt);
       });
-
       // Update debts for each user
       for (const userId in debtsByUser) {
         if (Object.hasOwnProperty.call(debtsByUser, userId)) {

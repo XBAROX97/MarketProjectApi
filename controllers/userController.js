@@ -8,7 +8,6 @@ const Purchase = require("../models/purchaseModel");
 const leaderboard = require("../models/leaderboard");
 const archivedUsers = require("../models/archivedUsers");
 
-
 //Get all users
 const getUsers = async (req, res) => {
   try {

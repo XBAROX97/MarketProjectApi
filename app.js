@@ -4,7 +4,6 @@ const dotenv = require("dotenv").config();
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const resetDebts = require('./debtReset');
-
 const connectDB = require("./config/dataBase");
 connectDB();
  app.use(express.json());

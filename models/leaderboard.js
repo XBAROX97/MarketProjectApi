@@ -14,7 +14,6 @@ const leaderSchema = new mongoose.Schema({
         type: String,
 
     },
-
     points: {
         type: Number,
         default: 0

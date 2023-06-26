@@ -5,5 +5,4 @@ const { purchaseHistory } = require("../controllers/historyController");
 //Get purchaseProduct history
 router.get('/:userId',purchaseHistory)
 
-
 module.exports = router;

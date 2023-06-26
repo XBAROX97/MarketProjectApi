@@ -15,7 +15,6 @@ const DebtSchema = new mongoose.Schema({
     default: Date.now
   }
 });
-
 const Debt = mongoose.model('Debt', DebtSchema);
 
 module.exports = Debt;

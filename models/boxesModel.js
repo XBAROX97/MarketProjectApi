@@ -12,7 +12,6 @@ const boxesSchema = new mongoose.Schema({
         type: Number,
         required: true
     },
-
     productQuantity: {
         type: Number,
         required: true

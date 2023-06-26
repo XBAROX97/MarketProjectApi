@@ -10,5 +10,4 @@ const ProfitpercentageSchema = new mongoose.Schema({
 
     
 })
-
 module.exports = mongoose.model('Profitpercentage', ProfitpercentageSchema)

@@ -5,5 +5,4 @@ const {getArchivedUsers} = require('../controllers/userController')
 router.get('/',getArchivedUsers)
 
 
-
 module.exports = router;

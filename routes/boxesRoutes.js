@@ -2,7 +2,6 @@ const express = require('express')
 const { postBoxes, get1Box, getBoxes, deleteBoxes, updateBoxes } = require('../controllers/boxesController')
 const router = express()
 
-
 //Get all boxes
 router.get("/", getBoxes);
 

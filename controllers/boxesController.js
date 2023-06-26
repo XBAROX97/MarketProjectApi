@@ -14,7 +14,6 @@ const postBoxes = async (req, res) => {
             productId: req.body.productId,
         });
 
-
         // update the quantity of products in the Product model
         const product = await Product.findById(req.body.productId);
         if (!product) {

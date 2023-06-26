@@ -15,7 +15,6 @@ const archivedUserSchema = new mongoose.Schema({
     }
 })
 
-
 const archivedUsers = mongoose.model('ArchivedUser', archivedUserSchema)
 
 module.exports = archivedUsers

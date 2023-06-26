@@ -15,7 +15,6 @@ const allProducts = async (req, res) => {
     res.json({ message: err });
   }
 };
-
 //Post products
 const postProducts = async (req, res) => {
   const retail = req.body.retailPrice

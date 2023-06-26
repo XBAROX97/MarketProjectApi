@@ -17,5 +17,4 @@ const purchaseHistory = async (req, res) => {
         console.log(error);
     }
 }
-
 module.exports = { purchaseHistory };

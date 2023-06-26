@@ -11,7 +11,6 @@ const boxes = require("../models/boxesModel");
 const PurchaseController = async (req, res) => {
   // try {
   const { userId, productId, quantity } = req.body;
-
   const user = await Users.findById(userId);
   const product = await Product.findById(productId);
   const box = await boxes.findOne({ productId: productId });

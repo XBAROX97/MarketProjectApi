@@ -8,5 +8,4 @@ router.post("/", PurchaseController);
 //Get all purchases
 router.get('/',getAllPurchases)
 
-
 module.exports = router;

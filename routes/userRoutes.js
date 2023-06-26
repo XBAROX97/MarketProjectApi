@@ -1,7 +1,6 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const router = express();
-
 const { getUsers, postUsers,get1User,deleteUser,updateUsers } = require("../controllers/userController");
 
 //Get all users
